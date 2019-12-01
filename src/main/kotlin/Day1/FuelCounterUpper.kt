@@ -9,7 +9,7 @@ fun main() {
     var total = 0
 
     input.forEachLine {
-        val result = fuelCounterUpper.doIt(it.toInt())
+        val result = fuelCounterUpper.calculateFuelRequirementRecursively(it.toInt())
         total += result
     }
 
@@ -17,5 +17,15 @@ fun main() {
 }
 
 class FuelCounterUpper {
-    fun doIt(mass: Int) = (mass / 3) - 2
+    fun calculateFuelRequirement(mass: Int) = (mass / 3) - 2
+
+    fun calculateFuelRequirementRecursively(mass: Int): Int {
+        var fuel = calculateFuelRequirement(mass)
+
+        if (calculateFuelRequirement(fuel) > 0) {
+            fuel += calculateFuelRequirementRecursively(fuel)
+        }
+
+        return fuel
+    }
 }
