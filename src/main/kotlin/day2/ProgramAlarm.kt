@@ -7,9 +7,9 @@ fun main() {
 
     var intCode = programAlarm.readProgramInput()
 
-    val resultCode = programAlarm.executeIntCodeProgram(intCode)
+    val intCodeResult = programAlarm.executeIntCodeProgram(intCode)
 
-    println(resultCode[0])
+    println(intCodeResult)
 
     intCode = programAlarm.readProgramInput()
 
@@ -33,7 +33,7 @@ class ProgramAlarm {
         return intCode
     }
 
-    fun executeIntCodeProgram(intCode: MutableList<Int>): MutableList<Int> {
+    fun executeIntCodeProgram(intCode: MutableList<Int>): Int {
         var opCodeIndex = 0
 
         while (intCode[opCodeIndex] != 99) {
@@ -50,11 +50,11 @@ class ProgramAlarm {
             opCodeIndex += 4
         }
 
-        return intCode
+        return intCode[0]
     }
 
-    fun findCorrectVerbAndNoun(intCode: MutableList<Int>, targetValue: Int): Pair<Int, Int> {
-        var result = Pair(-1,-1)
+    fun findCorrectVerbAndNoun(intCode: MutableList<Int>, targetValue: Int): Int {
+        var result = -1
 
         for (noun in 0..99) {
             for (verb in 0..99) {
@@ -63,9 +63,9 @@ class ProgramAlarm {
                 modifiedIntCode[1] = noun
                 modifiedIntCode[2] = verb
 
-                val resultCode = executeIntCodeProgram(modifiedIntCode)
+                val intCodeResult = executeIntCodeProgram(modifiedIntCode)
 
-                if (resultCode[0] == targetValue) result = Pair(noun, verb)
+                if (intCodeResult == targetValue) result = 100 * noun + verb
             }
         }
 
