@@ -36,7 +36,7 @@ class ProgramAlarm {
     fun executeIntCodeProgram(intCode: MutableList<Int>): MutableList<Int> {
         var opCodeIndex = 0
 
-        while (opCodeIndex <= intCode.size - 5) {
+        while (intCode[opCodeIndex] != 99) {
             val actionCode = intCode[opCodeIndex]
             val firstOperandIndex = intCode[opCodeIndex + 1]
             val secondOperandIndex = intCode[opCodeIndex + 2]
@@ -45,7 +45,6 @@ class ProgramAlarm {
             when (actionCode) {
                 1 -> intCode[resultIndex] = intCode[firstOperandIndex] + intCode[secondOperandIndex]
                 2 -> intCode[resultIndex] = intCode[firstOperandIndex] * intCode[secondOperandIndex]
-                99 -> return intCode
             }
 
             opCodeIndex += 4
