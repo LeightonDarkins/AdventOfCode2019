@@ -1,10 +1,11 @@
 package day1
 
-import java.io.File
+import util.FileReader
 
 fun main() {
     val fuelCounterUpper = FuelCounterUpper()
-    val input = File("src/main/resources/Day1/input.txt")
+    val fileReader = FileReader()
+    val input = fileReader.getFile("src/main/resources/Day1/input.txt")
 
     var total = 0
 
