@@ -20,32 +20,59 @@ fun main() {
         }
     }
 
-    println(CrossedWires().doIt(firstWireString, secondWireString))
+    println(CrossedWires().doPartOne(firstWireString, secondWireString))
+    println(CrossedWires().doPartTwo(firstWireString, secondWireString))
 }
 
 class CrossedWires {
-    fun doIt(wireOne: List<String>, wireTwo: List<String>): Int {
-        val firstWire = getWire(wireOne)
-        val secondWire = getWire(wireTwo)
+    private fun findIntersectionsWithoutOrigin(
+        firstPoints: HashMap<Pair<Int, Int>, Int>,
+        secondPoints: HashMap<Pair<Int, Int>, Int>
+    ): MutableSet<Pair<Int, Int>> {
+        val intersections = firstPoints.keys.intersect(secondPoints.keys).toMutableSet()
 
-        val firstPoints = processWire(firstWire)
-        val secondPoints = processWire(secondWire)
+        intersections.remove(Pair(0, 0))
 
-        val intersection = firstPoints.intersect(secondPoints).toMutableSet()
+        return intersections
+    }
 
-        intersection.remove(Pair(0,0))
+    fun doPartOne(wireOne: List<String>, wireTwo: List<String>): Int {
+        val firstPoints = getPoints(wireOne)
+        val secondPoints = getPoints(wireTwo)
+
+        val intersection = findIntersectionsWithoutOrigin(firstPoints, secondPoints)
 
         return intersection.map { manhattan(it.first, it.second) }.min()!!
     }
 
+    fun doPartTwo(wireOne: List<String>, wireTwo: List<String>): Int {
+        val firstPoints = getPoints(wireOne)
+        val secondPoints = getPoints(wireTwo)
+
+        val intersection = findIntersectionsWithoutOrigin(firstPoints, secondPoints)
+
+        return intersection.map {
+            val firstPointCount: Int = firstPoints[it]!!
+            val secondPointCount: Int = secondPoints[it]!!
+
+            firstPointCount + secondPointCount
+        }.min()!!
+    }
+
     private fun manhattan(num1: Int, num2: Int) = abs(num1) + abs(num2)
 
-    private fun getWire(inputString: List<String>) = inputString.map { it[0] to it.substring(1).toInt() }
+    private fun getPoints(inputString: List<String>) = processWire(inputString)
 
-    private fun processWire(wire: List<Pair<Char, Int>>): MutableList<Pair<Int, Int>> {
+    private fun processWire(inputString: List<String>): HashMap<Pair<Int, Int>, Int> {
+        val wire = getWire(inputString)
+
         val points = mutableListOf<Pair<Int, Int>>()
+        val things = HashMap<Pair<Int, Int>, Int>()
 
-        points.add(Pair(0,0))
+        points.add(Pair(0, 0))
+        things[Pair(0, 0)] = 0
+
+        var length = 0
 
         wire.forEach {
             var currentPoint = points.last()
@@ -61,12 +88,16 @@ class CrossedWires {
             }
 
             for (i in 0 until it.second) {
+                length++
                 currentPoint = Pair(currentPoint.first + xOffset, currentPoint.second + yOffset)
                 points.add(currentPoint)
+                things[currentPoint] = length
             }
         }
 
-        return points
+        return things
     }
+
+    private fun getWire(inputString: List<String>) = inputString.map { it[0] to it.substring(1).toInt() }
 }
 
