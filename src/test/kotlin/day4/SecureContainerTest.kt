@@ -26,4 +26,24 @@ class SecureContainerTest {
         assertFalse(SecureContainer().isPartOnePassword(testInput))
     }
 
+    @Test
+    fun partTwo_example1() {
+        val testInput = "112233"
+
+        assertTrue(SecureContainer().isPartTwoPassword(testInput))
+    }
+
+    @Test
+    fun partTwo_example2() {
+        val testInput = "123444"
+
+        assertFalse(SecureContainer().isPartTwoPassword(testInput))
+    }
+
+    @Test
+    fun partTwo_example3() {
+        val testInput = "111122"
+
+        assertTrue(SecureContainer().isPartTwoPassword(testInput))
+    }
 }
