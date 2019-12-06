@@ -4,9 +4,9 @@ import util.FileReader
 
 data class OrbitPair(val inOrbit: String, val around: String)
 
-data class OrbitNode(val name: String, val children: MutableList<OrbitNode> = mutableListOf()) {
+data class OrbitNode(val name: String, val parent: String?, val children: MutableList<OrbitNode> = mutableListOf()) {
     fun addChild(child: OrbitPair) {
-        children.add(OrbitNode(child.inOrbit, mutableListOf()))
+        children.add(OrbitNode(child.inOrbit, name, mutableListOf()))
     }
 }
 
@@ -21,18 +21,54 @@ fun main() {
         orbitPairs.add(OrbitPair(orbitItems[1], orbitItems[0]))
     }
 
-    println(UniversalOrbitMap().doIt(orbitPairs))
+    println(UniversalOrbitMap().doPartOne(orbitPairs))
+    println(UniversalOrbitMap().doPartTwo(orbitPairs))
 }
 
 class UniversalOrbitMap {
-    fun doIt(orbitPairs: MutableList<OrbitPair>): Int {
+    fun doPartOne(orbitPairs: MutableList<OrbitPair>): Int {
+        val rootNode = setUpMap(orbitPairs)
+
+        return countAllOrbits(rootNode)
+    }
+
+    fun doPartTwo(orbitPairs: MutableList<OrbitPair>): Int {
+        val pathToComFromYou = mutableListOf("YOU")
+        val pathToComFromSan = mutableListOf("SAN")
+
+        addParentToPath(orbitPairs, pathToComFromYou, "YOU")
+        addParentToPath(orbitPairs, pathToComFromSan, "SAN")
+
+        val sharedParent = pathToComFromSan.intersect(pathToComFromYou).first()
+
+        val youToParent = pathToComFromYou.indexOf(sharedParent) - 1
+        val sanToParent = pathToComFromSan.indexOf(sharedParent) - 1
+
+        return youToParent + sanToParent
+    }
+
+    private fun addParentToPath(
+        orbitPairs: MutableList<OrbitPair>,
+        pathToCom: MutableList<String>,
+        startingNode: String
+    ) {
+        val currentParent = orbitPairs.first { it.inOrbit == startingNode }!!.around
+
+        pathToCom.add(currentParent)
+
+        if (currentParent != "COM") {
+            addParentToPath(orbitPairs, pathToCom, currentParent)
+        }
+    }
+
+    private fun setUpMap(orbitPairs: MutableList<OrbitPair>): OrbitNode {
         val rootOrbit = findRootOrbit(orbitPairs)
 
-        val rootNode = OrbitNode(rootOrbit.around)
+        val rootNode = OrbitNode(rootOrbit.around, null)
 
         findAllOrbitsOf(rootNode, orbitPairs)
 
-        return countAllOrbits(rootNode)
+        return rootNode
     }
 
     private fun findRootOrbit(orbitPairs: MutableList<OrbitPair>): OrbitPair {
@@ -41,8 +77,8 @@ class UniversalOrbitMap {
 
     private fun findAllOrbitsOf(node: OrbitNode, orbitPairs: MutableList<OrbitPair>) {
         orbitPairs
-                .filter { it.around == node.name }
-                .forEach { node.addChild(it) }
+            .filter { it.around == node.name }
+            .forEach { node.addChild(it) }
 
         node.children.forEach { findAllOrbitsOf(it, orbitPairs) }
     }
