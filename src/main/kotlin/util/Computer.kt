@@ -9,10 +9,11 @@ class Computer(private val initialMemory: List<Int>, val input: MutableList<Int>
     var computerState =  ComputerState.NotStarted
 
     // overload get to be able to read data using a Parameter as array index. Example: val x = memory[parameter]
-    private operator fun MutableList<Int>.get(parameter: Parameter): Int {
+    private operator fun MutableList<Int>.get(parameter: Parameter, relativeBase: Int): Int {
         return when (parameter.mode) {
             Parameter.Mode.Position -> this[parameter.value]
             Parameter.Mode.Immediate -> parameter.value
+            Parameter.Mode.Relative -> relativeBase + parameter.value
         }
     }
 
@@ -24,7 +25,7 @@ class Computer(private val initialMemory: List<Int>, val input: MutableList<Int>
         }
     }
 
-    private fun getCurrentInstructionAndParameters(): Pair<Instruction, List<Parameter>> {
+    private fun getCurrentInstructionAndParameters(relativeBase: Int): Pair<Instruction, List<Parameter>> {
         val address = instructionPointer
         val instruction = Instruction.fromOpcode(memory[address])
 
@@ -41,15 +42,16 @@ class Computer(private val initialMemory: List<Int>, val input: MutableList<Int>
 
     fun run() {
         computerState = ComputerState.Running
+        var relativeBase = 0
         while (instructionPointer < memory.size) {
-            val (instruction, params) = getCurrentInstructionAndParameters()
+            val (instruction, params) = getCurrentInstructionAndParameters(relativeBase)
             when (instruction) {
                 is Instruction.Terminate -> {
                     computerState = ComputerState.Terminated
                     return
                 }
-                is Instruction.Add -> memory[params[2]] = memory[params[0]] + memory[params[1]]
-                is Instruction.Multiply -> memory[params[2]] = memory[params[0]] * memory[params[1]]
+                is Instruction.Add -> memory[params[2]] = memory[params[0], relativeBase] + memory[params[1], relativeBase]
+                is Instruction.Multiply -> memory[params[2]] = memory[params[0], relativeBase] * memory[params[1], relativeBase]
                 is Instruction.Input -> {
                     if (input.isEmpty()) {
                         computerState = ComputerState.WaitingForInput
@@ -58,15 +60,16 @@ class Computer(private val initialMemory: List<Int>, val input: MutableList<Int>
                         memory[params[0]] = input.removeAt(0)
                     }
                 }
-                is Instruction.Output -> output.add(memory[params[0]])
-                is Instruction.JumpIfTrue -> if (memory[params[0]] != 0) {
-                    instructionPointer = memory[params[1]] - instruction.length()
+                is Instruction.Output -> output.add(memory[params[0], relativeBase])
+                is Instruction.JumpIfTrue -> if (memory[params[0], relativeBase] != 0) {
+                    instructionPointer = memory[params[1], relativeBase] - instruction.length()
                 }
-                is Instruction.JumpIfFalse -> if (memory[params[0]] == 0) {
-                    instructionPointer = memory[params[1]] - instruction.length()
+                is Instruction.JumpIfFalse -> if (memory[params[0], relativeBase] == 0) {
+                    instructionPointer = memory[params[1], relativeBase] - instruction.length()
                 }
-                is Instruction.LessThan -> memory[params[2]] = if (memory[params[0]] < memory[params[1]]) 1 else 0
-                is Instruction.Equals -> memory[params[2]] = if (memory[params[0]] == memory[params[1]]) 1 else 0
+                is Instruction.LessThan -> memory[params[2]] = if (memory[params[0], relativeBase] < memory[params[1], relativeBase]) 1 else 0
+                is Instruction.Equals -> memory[params[2]] = if (memory[params[0], relativeBase] == memory[params[1], relativeBase]) 1 else 0
+                is Instruction.AdjustRelativeBase -> relativeBase = memory[params[0], relativeBase]
             }
             instructionPointer += instruction.length()
         }
@@ -104,6 +107,7 @@ sealed class Instruction(val numParams: Int) {
     class LessThan : Instruction(3)
     class Equals : Instruction(3)
     class Terminate : Instruction(0)
+    class AdjustRelativeBase : Instruction(2)
 
     fun length() = numParams + 1
 
@@ -117,6 +121,7 @@ sealed class Instruction(val numParams: Int) {
             6 -> JumpIfFalse()
             7 -> LessThan()
             8 -> Equals()
+            9 -> AdjustRelativeBase()
             99 -> Terminate()
             else -> throw RuntimeException("Invalid opcode encountered: $c")
         }
@@ -127,6 +132,7 @@ data class Parameter(val mode: Mode, val value: Int) {
     enum class Mode {
         Position,
         Immediate,
+        Relative
     }
 
     companion object {
@@ -134,6 +140,7 @@ data class Parameter(val mode: Mode, val value: Int) {
             val mode = when (rawMode) {
                 0 -> Mode.Position
                 1 -> Mode.Immediate
+                2 -> Mode.Relative
                 else -> throw java.lang.RuntimeException("Unknown parameter mode: $rawMode")
             }
             return Parameter(mode, value)
